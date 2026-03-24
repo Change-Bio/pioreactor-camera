@@ -1,0 +1,40 @@
+---
+display_name: Camera Capture
+job_name: camera_capture
+display: true
+source: pioreactor_camera
+description: Captures images from a USB webcam at configurable intervals and uploads to cloud storage.
+published_settings:
+  - key: minutes_between_captures
+    unit: min
+    label: Capture Interval
+    description: Minutes between automatic captures
+    type: numeric
+    default: "5.0"
+    display: true
+  - key: resolution_width
+    unit: px
+    label: Resolution Width
+    description: Image width in pixels
+    type: numeric
+    default: "640"
+    display: true
+  - key: resolution_height
+    unit: px
+    label: Resolution Height
+    description: Image height in pixels
+    type: numeric
+    default: "480"
+    display: true
+  - key: upload_to_gcs
+    label: Upload to GCS
+    description: Upload captured images to Google Cloud Storage
+    type: boolean
+    default: "1"
+    display: true
+  - key: capture_now
+    label: Capture Now
+    description: Take a photo immediately
+    type: boolean
+    default: "0"
+    display: true

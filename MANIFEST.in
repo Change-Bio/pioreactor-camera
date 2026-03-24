@@ -1,0 +1,7 @@
+include LICENSE.txt
+include README.md
+include pioreactor_camera/additional_config.ini
+recursive-include pioreactor_camera/ui *
+recursive-include pioreactor_camera/static *
+include pioreactor_camera/post_install.sh
+include pioreactor_camera/pre_uninstall.sh

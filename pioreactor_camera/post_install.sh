@@ -33,9 +33,13 @@ systemctl restart pioreactor-camera-server.service
 cat > /etc/lighttpd/conf-enabled/52-camera.conf << 'LCONF'
 server.modules += ("mod_proxy")
 
-$HTTP["url"] =~ "^/camera($|/)" {
+$HTTP["url"] == "/camera" {
+  url.redirect = ("" => "/camera/")
+}
+
+$HTTP["url"] =~ "^/camera/" {
   proxy.server = ("" => (("host" => "127.0.0.1", "port" => 8190)))
-  proxy.header = ("map-urlpath" => ("/camera" => ""))
+  proxy.header = ("map-urlpath" => ("/camera/" => "/"))
 }
 LCONF
 

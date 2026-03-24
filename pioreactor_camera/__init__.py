@@ -1,0 +1,1 @@
+from pioreactor_camera.camera_capture import click_camera_capture

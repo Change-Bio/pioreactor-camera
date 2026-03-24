@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Create image directory
-mkdir -p /home/pioreactor/webcam_snaps
-chown pioreactor:www-data /home/pioreactor/webcam_snaps
-chmod 775 /home/pioreactor/webcam_snaps
+mkdir -p /home/pioreactor/camera_images
+chown pioreactor:www-data /home/pioreactor/camera_images
+chmod 775 /home/pioreactor/camera_images
 
 # Install camera server systemd service
 cat > /etc/systemd/system/pioreactor-camera-server.service << 'EOF'

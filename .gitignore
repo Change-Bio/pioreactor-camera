@@ -5,6 +5,5 @@ build/
 *.egg
 .venv/
 node_modules/
-pioreactor_camera/static/
 frontend/node_modules/
 tsconfig.tsbuildinfo

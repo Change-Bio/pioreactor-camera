@@ -56,7 +56,7 @@ The capture interval, resolution, "upload to GCS", and "capture now" can also be
 
 Optional. When `upload_to_gcs=1` and `gcs_bucket` is set, every successful capture is uploaded by shelling out to `gcloud storage cp`. Requirements:
 
-- `gcloud` must be on PATH for the `pioreactor` user.
+- `gcloud` must be installed. The plugin looks on `$PATH` first, then in the default install locations (`~/google-cloud-sdk/bin/`, `/usr/local/google-cloud-sdk/bin/`, `/opt/google-cloud-sdk/bin/`) — which means the `curl https://sdk.cloud.google.com | bash` install just works without further setup.
 - `gcloud` must be authenticated — either `gcloud auth login` interactively, or `gcloud auth activate-service-account` with a JSON key.
 - The destination object is `<gcs_bucket>/<YYYY>/<MM>/<DD>/<filename>`. Upload failures are logged and skipped; captures themselves are not aborted by a failed upload.
 

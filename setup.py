@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pioreactor_camera",
-    version="0.1.0",
+    version="0.2.0",
     license_files=("LICENSE.txt",),
     description="Camera capture plugin with web gallery viewer for Pioreactor",
     long_description=open("README.md").read(),

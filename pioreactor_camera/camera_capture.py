@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import os
+import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -26,18 +28,43 @@ def __dir__():
 IMAGE_DIR = Path(config.get("camera_capture.config", "image_directory", fallback="/home/pioreactor/camera_images"))
 
 
+def _find_gcloud() -> str | None:
+    """Return a path to the gcloud binary, or None.
+
+    Looks on PATH first, then in the default install locations
+    (`~/google-cloud-sdk/bin`, `/usr/local/google-cloud-sdk/bin`,
+    `/opt/google-cloud-sdk/bin`) so the plugin works from a systemd
+    service whose PATH may not include the SDK.
+    """
+    p = shutil.which("gcloud")
+    if p:
+        return p
+    candidates = [
+        Path.home() / "google-cloud-sdk/bin/gcloud",
+        Path("/usr/local/google-cloud-sdk/bin/gcloud"),
+        Path("/opt/google-cloud-sdk/bin/gcloud"),
+    ]
+    for c in candidates:
+        if c.is_file() and os.access(c, os.X_OK):
+            return str(c)
+    return None
+
+
 def upload_image(filepath: Path, gcs_bucket: str, gcs_project: str) -> bool:
     """Upload a captured image to GCS using `gcloud storage cp`.
 
-    Writes to <gcs_bucket>/<YYYY>/<MM>/<DD>/<filename>. `gcloud` must be on
-    PATH and authenticated. Returns False on any failure; never raises.
+    Writes to <gcs_bucket>/<YYYY>/<MM>/<DD>/<filename>. `gcloud` must be
+    installed and authenticated. Returns False on any failure; never raises.
     """
     if not gcs_bucket:
+        return False
+    gcloud = _find_gcloud()
+    if gcloud is None:
         return False
     try:
         date_path = datetime.now().strftime("%Y/%m/%d")
         dest = f"{gcs_bucket.rstrip('/')}/{date_path}/"
-        cmd = ["gcloud", "storage", "cp", str(filepath), dest]
+        cmd = [gcloud, "storage", "cp", str(filepath), dest]
         if gcs_project:
             cmd.append(f"--project={gcs_project}")
         subprocess.run(cmd, capture_output=True, timeout=30, check=True)

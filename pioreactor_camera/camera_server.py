@@ -133,23 +133,10 @@ class CameraHandler(SimpleHTTPRequestHandler):
         path = parsed.path.rstrip("/")
 
         if path == "/api/capture":
-            from pioreactor_camera.camera_capture import capture_image, upload_to_gcs, IMAGE_DIR as CAP_DIR
+            from pioreactor_camera.camera_capture import capture_image, IMAGE_DIR as CAP_DIR
             filename = capture_image(CAP_DIR)
             if filename:
-                # Optionally upload to GCS
-                try:
-                    upload_gcs = config.getboolean("camera_capture.config", "upload_to_gcs", fallback=True)
-                    if upload_gcs:
-                        gcs_bucket = config.get(
-                            "camera_capture.config", "gcs_bucket",
-                            fallback="gs://REDACTED-BUCKET/webcam_snaps"
-                        )
-                        gcs_project = config.get(
-                            "camera_capture.config", "gcs_project", fallback="REDACTED-PROJECT"
-                        )
-                        upload_to_gcs(CAP_DIR / filename, gcs_bucket, gcs_project)
-                except Exception:
-                    pass
+                # GCS upload handled by separate cron (~/take_and_upload_photo.sh)
                 ts = parse_image_timestamp(filename)
                 self._json_response({
                     "success": True,

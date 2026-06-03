@@ -8,9 +8,9 @@ setup(
     description="Camera capture plugin with web gallery viewer for Pioreactor",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    author_email="noahsprent@gmail.com",
+    author_email="noah@changebio.uk",
     author="Noah Sprent",
-    url="https://github.com/noahsprent/pioreactor-camera",
+    url="https://github.com/Change-Bio/pioreactor-camera",
     packages=find_packages(),
     include_package_data=True,
     package_data={

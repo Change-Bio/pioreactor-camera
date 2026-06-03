@@ -13,7 +13,7 @@ from pioreactor.whoami import get_unit_name
 from pioreactor.whoami import UNIVERSAL_EXPERIMENT
 
 __plugin_summary__ = "Captures images from a USB webcam at configurable intervals"
-__plugin_version__ = "0.1.1"
+__plugin_version__ = "0.2.0"
 __plugin_name__ = "Camera Capture"
 __plugin_author__ = "Noah Sprent"
 __plugin_homepage__ = "https://github.com/Change-Bio/pioreactor-camera"
@@ -24,6 +24,26 @@ def __dir__():
 
 
 IMAGE_DIR = Path(config.get("camera_capture.config", "image_directory", fallback="/home/pioreactor/camera_images"))
+
+
+def upload_image(filepath: Path, gcs_bucket: str, gcs_project: str) -> bool:
+    """Upload a captured image to GCS using `gcloud storage cp`.
+
+    Writes to <gcs_bucket>/<YYYY>/<MM>/<DD>/<filename>. `gcloud` must be on
+    PATH and authenticated. Returns False on any failure; never raises.
+    """
+    if not gcs_bucket:
+        return False
+    try:
+        date_path = datetime.now().strftime("%Y/%m/%d")
+        dest = f"{gcs_bucket.rstrip('/')}/{date_path}/"
+        cmd = ["gcloud", "storage", "cp", str(filepath), dest]
+        if gcs_project:
+            cmd.append(f"--project={gcs_project}")
+        subprocess.run(cmd, capture_output=True, timeout=30, check=True)
+        return True
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+        return False
 
 
 def capture_image(
@@ -67,6 +87,7 @@ class CameraCapture(BackgroundJobContrib):
         "minutes_between_captures": {"datatype": "float", "settable": True, "unit": "min"},
         "resolution_width": {"datatype": "int", "settable": True, "unit": "px"},
         "resolution_height": {"datatype": "int", "settable": True, "unit": "px"},
+        "upload_to_gcs": {"datatype": "boolean", "settable": True},
         "capture_now": {"datatype": "boolean", "settable": True},
     }
 
@@ -85,6 +106,11 @@ class CameraCapture(BackgroundJobContrib):
         self.resolution_height = int(
             config.get("camera_capture.config", "resolution_height", fallback="480")
         )
+        self.upload_to_gcs = config.getboolean(
+            "camera_capture.config", "upload_to_gcs", fallback=False
+        )
+        self.gcs_bucket = config.get("camera_capture.config", "gcs_bucket", fallback="")
+        self.gcs_project = config.get("camera_capture.config", "gcs_project", fallback="")
 
     def on_init_to_ready(self):
         self._start_capture_timer()
@@ -120,10 +146,15 @@ class CameraCapture(BackgroundJobContrib):
             self.resolution_width,
             self.resolution_height,
         )
-        if filename:
-            self.logger.debug(f"Captured {filename}")
-        else:
+        if not filename:
             self.logger.warning("Image capture failed")
+            return
+        self.logger.debug(f"Captured {filename}")
+        if self.upload_to_gcs and self.gcs_bucket:
+            if upload_image(self.image_dir / filename, self.gcs_bucket, self.gcs_project):
+                self.logger.debug(f"Uploaded {filename} to {self.gcs_bucket}")
+            else:
+                self.logger.warning(f"GCS upload failed for {filename}")
 
     def set_minutes_between_captures(self, value):
         self.minutes_between_captures = float(value)
@@ -135,6 +166,9 @@ class CameraCapture(BackgroundJobContrib):
 
     def set_resolution_height(self, value):
         self.resolution_height = int(value)
+
+    def set_upload_to_gcs(self, value):
+        self.upload_to_gcs = bool(int(value))
 
     @property
     def capture_now(self):

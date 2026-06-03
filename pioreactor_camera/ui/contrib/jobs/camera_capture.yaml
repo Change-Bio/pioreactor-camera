@@ -26,6 +26,12 @@ published_settings:
     type: numeric
     default: "480"
     display: true
+  - key: upload_to_gcs
+    label: Upload to GCS
+    description: Upload each captured image to the configured GCS bucket. Requires gcloud on PATH and authenticated.
+    type: boolean
+    default: "0"
+    display: true
   - key: capture_now
     label: Capture Now
     description: Take a photo immediately

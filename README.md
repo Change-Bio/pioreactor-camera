@@ -9,7 +9,6 @@ A USB-webcam plugin for [Pioreactor](https://pioreactor.com). Captures JPEGs fro
 
 ## What it does *not* do
 
-- **It does not upload images anywhere.** If you want offsite copies, run a separate uploader as a cron job, systemd timer, or rclone watcher against `image_directory`.
 - **No support for the Pi CSI camera ribbon.** This is a USB webcam plugin — it talks to v4l2 via `/dev/video0`. If you have a Raspberry Pi camera module, you'd want a different capture backend (libcamera / `rpicam-still`).
 
 ## Requirements
@@ -47,8 +46,21 @@ Set in `[camera_capture.config]` in `~/.pioreactor/config.ini`:
 | `resolution_width` | `640` | ffmpeg `-video_size` width |
 | `resolution_height` | `480` | ffmpeg `-video_size` height |
 | `server_port` | `8190` | Local port the gallery server binds to (must match the proxy in `52-camera.conf`) |
+| `upload_to_gcs` | `0` | If `1`, each captured image is uploaded to GCS |
+| `gcs_bucket` | (empty) | Target bucket, e.g. `gs://my-bucket/snaps` — `YYYY/MM/DD/` is appended automatically |
+| `gcs_project` | (empty) | Optional GCP project for the `--project` flag passed to gcloud |
 
-The capture interval, resolution, and "capture now" can also be changed live through the Pioreactor UI — they're exposed as published settings on the `camera_capture` job.
+The capture interval, resolution, "upload to GCS", and "capture now" can also be changed live through the Pioreactor UI — they're exposed as published settings on the `camera_capture` job.
+
+### GCS upload
+
+Optional. When `upload_to_gcs=1` and `gcs_bucket` is set, every successful capture is uploaded by shelling out to `gcloud storage cp`. Requirements:
+
+- `gcloud` must be on PATH for the `pioreactor` user.
+- `gcloud` must be authenticated — either `gcloud auth login` interactively, or `gcloud auth activate-service-account` with a JSON key.
+- The destination object is `<gcs_bucket>/<YYYY>/<MM>/<DD>/<filename>`. Upload failures are logged and skipped; captures themselves are not aborted by a failed upload.
+
+If you'd rather batch uploads out-of-process (e.g. an `rclone` cron sweeping `image_directory`), leave `upload_to_gcs=0` and run your own sidecar.
 
 ## Architecture
 

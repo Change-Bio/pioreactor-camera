@@ -133,10 +133,14 @@ class CameraHandler(SimpleHTTPRequestHandler):
         path = parsed.path.rstrip("/")
 
         if path == "/api/capture":
-            from pioreactor_camera.camera_capture import capture_image, IMAGE_DIR as CAP_DIR
+            from pioreactor_camera.camera_capture import capture_image, upload_image, IMAGE_DIR as CAP_DIR
             filename = capture_image(CAP_DIR)
             if filename:
-                # GCS upload handled by separate cron (~/take_and_upload_photo.sh)
+                if config.getboolean("camera_capture.config", "upload_to_gcs", fallback=False):
+                    bucket = config.get("camera_capture.config", "gcs_bucket", fallback="")
+                    project = config.get("camera_capture.config", "gcs_project", fallback="")
+                    if bucket:
+                        upload_image(CAP_DIR / filename, bucket, project)
                 ts = parse_image_timestamp(filename)
                 self._json_response({
                     "success": True,
